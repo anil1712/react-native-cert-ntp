@@ -40,13 +40,17 @@ public class KeyPinStoreUtil {
         keyStore.load(null, null);
 
         for (String filename : filenames) {
-            FileInputStream fis = new FileInputStream(filename);
-            BufferedInputStream bis = new BufferedInputStream(fis);
+            BufferedInputStream bis;
+            if(filename.charAt(0) == '/'){
+                bis = new BufferedInputStream(new FileInputStream(filename));
+            }
+            else {
+                bis = new BufferedInputStream(this.getClass().getClassLoader().getResourceAsStream("assets/" + filename + ".cer"));
+            }
             Certificate ca;
             try {
                 ca = cf.generateCertificate(bis);
             } finally {
-                fis.close();
                 bis.close();
             }
 
