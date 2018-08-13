@@ -1,6 +1,7 @@
 package com.localz.pinch.utils;
 
 import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyManagementException;
@@ -39,13 +40,18 @@ public class KeyPinStoreUtil {
         keyStore.load(null, null);
 
         for (String filename : filenames) {
-            InputStream caInput = new BufferedInputStream(this.getClass().getClassLoader().getResourceAsStream("assets/" + filename + ".cer"));
+            BufferedInputStream bis;
+            if(filename.charAt(0) == '/'){
+                bis = new BufferedInputStream(new FileInputStream(filename));
+            }
+            else {
+                bis = new BufferedInputStream(this.getClass().getClassLoader().getResourceAsStream("assets/" + filename + ".cer"));
+            }
             Certificate ca;
             try {
-                ca = cf.generateCertificate(caInput);
-                System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
+                ca = cf.generateCertificate(bis);
             } finally {
-                caInput.close();
+                bis.close();
             }
 
             keyStore.setCertificateEntry(filename, ca);
