@@ -1,14 +1,14 @@
 {
-  "name": "react-native-pinch",
-  "version": "0.1.0",
-  "description": "React Native fetch with SSL Pinning support",
+  "name": "react-native-cert-pinning",
+  "version": "1.0.0",
+  "description": "React Native fetch with SSL Cert Pinning support",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/localz/react-native-pinch"
+    "url": "https://github.com/NewtopiaDEV/react-native-cert-pinning"
   },
   "keywords": [
     "react-native",
@@ -17,12 +17,12 @@
     "SSL",
     "Network"
   ],
-  "author": "Localz",
+  "author": "NewtopiaDEV",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/localz/react-native-pinch/issues"
+    "url": "https://github.com/NewtopiaDEV/react-native-cert-pinning/issues"
   },
-  "homepage": "https://github.com/localz/react-native-pinch#readme",
+  "homepage": "https://github.com/NewtopiaDEV/react-native-cert-pinning#readme",
   "devDependencies": {
     "react": "15.3.2",
     "react-native": "^0.34"
