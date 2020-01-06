@@ -6,20 +6,23 @@ Callback and promise based HTTP client that supports SSL pinning for React Nativ
 
 Using NPM:
 ```
-npm install react-native-pinch
+npm install react-native-cert-ntp
 ```
 
 Using Yarn:
 ```
-yarn add react-native-pinch
+yarn add react-native-cert-ntp
 ```
+## Supports the new Autolinking
+
+Automatically link (Only recommended when autolinking failed)
 
 ## Automatically link
 
 #### With React Native 0.27+
 
 ```shell
-react-native link react-native-pinch
+react-native link react-native-cert-ntp
 ```
 
 #### With older versions of React Native
@@ -27,7 +30,7 @@ react-native link react-native-pinch
 You need [`rnpm`](https://github.com/rnpm/rnpm) (`npm install -g rnpm`)
 
 ```shell
-rnpm link react-native-pinch
+rnpm link react-native-cert-ntp
 ```
 
 ## Manually link
