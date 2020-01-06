@@ -38,7 +38,7 @@ rnpm link react-native-cert-ntp
 ### iOS (via Cocoa Pods)
 Add the following line to your build targets in your `Podfile`
 
-`pod 'RNPinch', :path => '../node_modules/react-native-pinch'`
+`pod 'RNPinch', :path => '../node_modules/react-native-cert-ntp'`
 
 Then run `pod install`
 
@@ -50,7 +50,7 @@ Then run `pod install`
 dependencies {
     ...
     compile "com.facebook.react:react-native:+"  // From node_modules
-+   compile project(':react-native-pinch')
++   compile project(':react-native-cert-ntp')
 }
 ```
 
@@ -59,8 +59,8 @@ dependencies {
 ```diff
 ...
 include ':app'
-+ include ':react-native-pinch'
-+ project(':react-native-pinch').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-pinch/android')
++ include ':react-native-cert-ntp'
++ project(':react-native-cert-ntp').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-cert-ntp/android')
 ```
 
 #### With React Native 0.29+
@@ -125,7 +125,7 @@ Requests can be made by using the `fetch(url[, config, [callback]])` method of P
 
 ### Using Promises
 ```javascript
-import pinch from 'react-native-pinch';
+import pinch from 'react-native-cert-ntp';
 
 pinch.fetch('https://my-api.com/v1/endpoint', {
   method: 'post',
@@ -143,7 +143,7 @@ pinch.fetch('https://my-api.com/v1/endpoint', {
 
 ### Using Callbacks
 ```javascript
-import pinch from 'react-native-pinch';
+import pinch from 'react-native-cert-ntp';
 
 pinch.fetch('https://my-api.com/v1/endpoint', {
   method: 'post',
@@ -166,7 +166,7 @@ pinch.fetch('https://my-api.com/v1/endpoint', {
 ### Skipping validation
 
 ```javascript
-import pinch from 'react-native-pinch';
+import pinch from 'react-native-cert-ntp';
 
 pinch.fetch('https://my-api.com/v1/endpoint', {
   method: 'post',
@@ -197,7 +197,7 @@ pinch.fetch('https://my-api.com/v1/endpoint', {
 Using [fetch-mock](http://www.wheresrhys.co.uk/fetch-mock/) here, but nock or any other fetch polyfill would work.
 
 ```js
-# __mocks__/react-native-pinch.js
+# __mocks__/react-native-cert-ntp.js
 import fetchMock from 'fetch-mock'; 
 
 export default {
@@ -209,11 +209,11 @@ export default {
 # __tests__/store.js
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import pinch from 'react-native-pinch'; // actually the sandbox from fetch-mock
+import pinch from 'react-native-cert-ntp'; // actually the sandbox from fetch-mock
 
 import { fetchFoos } from './path/to/store/actions';
 
-jest.mock('react-native-pinch');
+jest.mock('react-native-cert-ntp');
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
