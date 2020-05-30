@@ -77,7 +77,8 @@ public class HttpUtil {
         HttpsURLConnection connection;
         URL url = new URL(request.endpoint);
         String method = request.method.toUpperCase();
-
+        HttpsURLConnection.setFollowRedirects(false);
+        
         connection = (HttpsURLConnection) url.openConnection();
         if (request.certFilenames != null) {
             connection.setSSLSocketFactory(KeyPinStoreUtil.getInstance(request.certFilenames).getContext().getSocketFactory());
