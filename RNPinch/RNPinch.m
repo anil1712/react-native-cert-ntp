@@ -108,40 +108,42 @@ RCT_EXPORT_MODULE();
 
 RCT_EXPORT_METHOD(fetch:(NSString *)url obj:(NSDictionary *)obj callback:(RCTResponseSenderBlock)callback) {
     NSURL *u = [NSURL URLWithString:url];
+    NSURLSession *session;
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:u];
     
-    NSURLSession *session;
     if (obj) {
-        if (obj[@"method"]) {
-            [request setHTTPMethod:obj[@"method"]];
-        }
-        if (obj[@"timeoutInterval"]) {
-            [request setTimeoutInterval:[obj[@"timeoutInterval"] doubleValue] / 1000];
-        }
-        if (obj[@"headers"] && [obj[@"headers"] isKindOfClass:[NSDictionary class]]) {
-            NSMutableDictionary *m = [obj[@"headers"] mutableCopy];
-            for (NSString *key in [m allKeys]) {
-                if (![m[key] isKindOfClass:[NSString class]]) {
-                    m[key] = [m[key] stringValue];
-                }
-            }
-            [request setAllHTTPHeaderFields:m];
-        }
-        if (obj[@"body"]) {
-            NSData *data = [obj[@"body"] dataUsingEncoding:NSUTF8StringEncoding];
-            [request setHTTPBody:data];
-        }
-    }
-    if (obj && obj[@"sslPinning"] && obj[@"sslPinning"][@"cert"]) {
-        NSURLSessionSSLPinningDelegate *delegate = [[NSURLSessionSSLPinningDelegate alloc] initWithCertNames:@[obj[@"sslPinning"][@"cert"]]];
-        session = [NSURLSession sessionWithConfiguration:self.sessionConfig delegate:delegate delegateQueue:[NSOperationQueue mainQueue]];
-    } else if (obj && obj[@"sslPinning"] && obj[@"sslPinning"][@"certs"]) {
-        // load all certs
-        NSURLSessionSSLPinningDelegate *delegate = [[NSURLSessionSSLPinningDelegate alloc] initWithCertNames:obj[@"sslPinning"][@"certs"]];
-        session = [NSURLSession sessionWithConfiguration:self.sessionConfig delegate:delegate delegateQueue:[NSOperationQueue mainQueue]];
-    } else {
-        session = [NSURLSession sessionWithConfiguration:self.sessionConfig];
-    }
+         if (obj[@"method"]) {
+             [request setHTTPMethod:obj[@"method"]];
+         }
+         if (obj[@"timeoutInterval"]) {
+             [request setTimeoutInterval:[obj[@"timeoutInterval"] doubleValue] / 1000];
+         }
+         if (obj[@"headers"] && [obj[@"headers"] isKindOfClass:[NSDictionary class]]) {
+             NSMutableDictionary *m = [obj[@"headers"] mutableCopy];
+             for (NSString *key in [m allKeys]) {
+                 if (![m[key] isKindOfClass:[NSString class]]) {
+                     m[key] = [m[key] stringValue];
+                 }
+             }
+             [request setAllHTTPHeaderFields:m];
+         }
+         if (obj[@"body"]) {
+             NSData *data = [obj[@"body"] dataUsingEncoding:NSUTF8StringEncoding];
+             [request setHTTPBody:data];
+         }
+     }
+     if (obj && obj[@"sslPinning"] && obj[@"sslPinning"][@"cert"]) {
+         NSURLSessionSSLPinningDelegate *delegate = [[NSURLSessionSSLPinningDelegate alloc] initWithCertNames:@[obj[@"sslPinning"][@"cert"]]];
+         session = [NSURLSession sessionWithConfiguration:self.sessionConfig delegate:delegate delegateQueue:[NSOperationQueue mainQueue]];
+     } else if (obj && obj[@"sslPinning"] && obj[@"sslPinning"][@"certs"]) {
+         // load all certs
+         NSURLSessionSSLPinningDelegate *delegate = [[NSURLSessionSSLPinningDelegate alloc] initWithCertNames:obj[@"sslPinning"][@"certs"]];
+         session = [NSURLSession sessionWithConfiguration:self.sessionConfig delegate:delegate delegateQueue:[NSOperationQueue mainQueue]];
+     } else {
+         session = [NSURLSession sessionWithConfiguration:self.sessionConfig];
+     }
+    
+    session= [NSURLSession sessionWithConfiguration:self.sessionConfig delegate:self delegateQueue:nil];
     
     __block NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if (!error) {
@@ -152,11 +154,13 @@ RCT_EXPORT_METHOD(fetch:(NSString *)url obj:(NSDictionary *)obj callback:(RCTRes
                 NSString *statusText = [NSHTTPURLResponse localizedStringForStatusCode:httpResp.statusCode];
                 
                 NSDictionary *res = @{
-                                      @"status": @(statusCode),
-                                      @"headers": httpResp.allHeaderFields,
-                                      @"bodyString": bodyString,
-                                      @"statusText": statusText
-                                      };
+                    @"status": @(statusCode),
+                    @"headers": httpResp.allHeaderFields,
+                    @"bodyString": bodyString,
+                    @"statusText": statusText
+                };
+                
+                 NSLog(@" Updated Code From tikam %@", res);
                 callback(@[[NSNull null], res]);
             });
         } else {
@@ -167,6 +171,19 @@ RCT_EXPORT_METHOD(fetch:(NSString *)url obj:(NSDictionary *)obj callback:(RCTRes
     }];
     
     [dataTask resume];
+}
+
+-(void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
+    
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+    NSInteger statusCode = [httpResponse statusCode];
+    //NSLog (@"HTTP status %d %@", statusCode, redirectResponse);
+    //NSDictionary *results    = (NSDictionary *)response;
+    
+    if ([httpResponse respondsToSelector:@selector(allHeaderFields)] && statusCode == 302) {
+        
+    }
+    completionHandler(nil);
 }
 
 @end
