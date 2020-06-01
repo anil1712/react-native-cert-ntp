@@ -16,6 +16,17 @@
 
 // private delegate for verifying certs
 @interface NSURLSessionSSLPinningDelegate:NSObject <NSURLSessionDelegate>
+{
+    NSMutableURLRequest *reactRequest;
+    NSDictionary *jsonRes;
+    NSString *cookie;
+
+}
+@property (nonatomic,strong) NSURLSession* session;
+@property (nonatomic,strong) NSMutableData *receivedData;
+@property (nonatomic, strong) NSHTTPURLResponse* httpURLResponse;
+@property (nonatomic,assign,getter=isExecuting) BOOL executing;
+@property (nonatomic,assign,getter=isFinished) BOOL finished;
 
 - (id)initWithCertNames:(NSArray<NSString *> *)certNames;
 
@@ -152,11 +163,11 @@ RCT_EXPORT_METHOD(fetch:(NSString *)url obj:(NSDictionary *)obj callback:(RCTRes
                 NSString *statusText = [NSHTTPURLResponse localizedStringForStatusCode:httpResp.statusCode];
                 
                 NSDictionary *res = @{
-                                      @"status": @(statusCode),
-                                      @"headers": httpResp.allHeaderFields,
-                                      @"bodyString": bodyString,
-                                      @"statusText": statusText
-                                      };
+                    @"status": @(statusCode),
+                    @"headers": httpResp.allHeaderFields,
+                    @"bodyString": bodyString,
+                    @"statusText": statusText
+                };
                 callback(@[[NSNull null], res]);
             });
         } else {
@@ -167,6 +178,164 @@ RCT_EXPORT_METHOD(fetch:(NSString *)url obj:(NSDictionary *)obj callback:(RCTRes
     }];
     
     [dataTask resume];
+}
+
+
+/* Redirect Handlling Request*/
+
+-(IBAction)redirectRequest
+{
+    NSString *urlString = @"https://pprd.us.auth.kamereon.org/kauth/oauth2/n-nissan-na-pprd/authorize?response_type=token%20id_token&scope=openid%20profile%20vehicles&redirect_uri=https://sxm-kauth.com&client_id=n-nissan-na-sxm-pprd&state=KJWJGMlekfjhqfF&nonce=Fkjlqmkfoq";
+    
+    cookie = @"kauthSession=AQIC5wM2LY4SfcyWpuyVThmnMV0sae_i3h7Ev1uOYPk4wZo.*AAJTSQACMDIAAlNLABI3MDYxNTcyMTUwMjM0OTI1MDcAAlMxAAIwMw..*";
+    [self redirectRequest:urlString cookies:cookie placeHolder:nil];
+}
+
+-(void) responseHeaderResult
+{
+    NSLog(@"Header Info %@", jsonRes);
+}
+
+-(void) failedResponse:(NSString *)errorString
+{
+    NSLog(@"Header Info", errorString);
+}
+
+
+
+- (void)redirectRequest:(NSString *) urlString  cookies:(NSString *)cookies placeHolder:(NSDictionary *)headerFiledWithKey
+{
+    if (!urlString)
+    {
+        NSLog(@"[HTTPRequest] please fill url field before calling performRequest");
+        [self failedResponse:@"please fill url field before calling performRequest"];
+        return;
+    };
+    
+    NSString * requestString = [NSString stringWithString: urlString];
+    
+    reactRequest = [[NSMutableURLRequest alloc] init] ;
+    [reactRequest setURL:[NSURL URLWithString:requestString]];
+    [reactRequest setHTTPMethod: @"GET"];
+    [reactRequest setTimeoutInterval: 45];
+    [reactRequest setValue: cookies forHTTPHeaderField: @"Cookie"];
+    
+    for (NSString * key in headerFiledWithKey)
+    {
+        [reactRequest setValue: [headerFiledWithKey valueForKey: key] forHTTPHeaderField: key];
+        
+    }
+    
+    NSLog(@"Send http request to URL: %@", urlString);
+    //  NSLog(@"Request Header are: %@", [theRequest allHTTPHeaderFields]);
+    
+#ifdef _DEBUG
+    for (id key in [theRequest allHTTPHeaderFields])
+    {
+        NSLog(@"header line: %@ = %@", key, [[theRequest allHTTPHeaderFields] valueForKey:key]);
+    }
+#endif //_DEBUG
+    
+    //        if(postBody)
+    //        {
+    //            [theRequest setHTTPBody: postBody];
+    //        }
+    
+    //reactConnection = [[NSURLConnection alloc] initWithRequest:reactRequest delegate:self startImmediately: YES];
+    
+    //reactConnection = [NSURLSession sessionWithConfiguration:<#(nonnull NSURLSessionConfiguration *)#> delegate:self delegateQueue:<#(nullable NSOperationQueue *)#>]
+    self.executing = YES;
+    
+    NSURLSessionConfiguration* config = [NSURLSessionConfiguration defaultSessionConfiguration];
+    config.timeoutIntervalForRequest = 45;
+    config.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+    self.session = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:nil];
+    [[self.session dataTaskWithRequest:reactRequest] resume];
+    if ( self.session)
+    {
+        if (_receivedData == nil)
+            _receivedData = [NSMutableData data] ;
+    }
+    else
+    {
+        NSLog(@"Network Error");
+    }
+}
+
+
+
+
+- (void)cancel {
+    [self.session invalidateAndCancel];
+    [self finishOperation];
+}
+
+- (void)finishOperation {
+    [self.session invalidateAndCancel];
+    if (self.isExecuting) {
+        self.executing = NO;
+    }
+    if (!self.isFinished) {
+        self.finished = YES;
+    }
+}
+
+- (BOOL)isConcurrent {
+    return YES;
+}
+
+- (void)setExecuting:(BOOL)executing {
+    [self willChangeValueForKey:@"isExecuting"];
+    _executing = executing;
+    [self didChangeValueForKey:@"isExecuting"];
+}
+
+- (void)setFinished:(BOOL)finished {
+    [self willChangeValueForKey:@"isFinished"];
+    _finished = finished;
+    [self didChangeValueForKey:@"isFinished"];
+}
+
+#pragma mark NSURLSessionTaskDelegate methods
+
+-(void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
+    NSLog(@"Network Test current thread %@", [NSThread currentThread]);
+    NSLog(@"willPerformHTTPRedirection");
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+    int statusCode = [httpResponse statusCode];
+    //NSLog (@"HTTP status %d %@", statusCode, redirectResponse);
+    NSDictionary *results    = (NSDictionary *)response;
+    NSLog(@"Network Class %@ %ld", results, statusCode);
+    
+    if ([httpResponse respondsToSelector:@selector(allHeaderFields)] && statusCode == 302) {
+        jsonRes = [httpResponse allHeaderFields];
+        NSLog(@" Data get from server %@", [jsonRes description]);
+        [self responseHeaderResult];
+    }
+    completionHandler(nil);
+}
+
+-(void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
+    
+    NSLog(@"Network Test current thread %@", [NSThread currentThread]);
+    NSLog(@"didReceiveResponse");
+    completionHandler(NSURLSessionResponseAllow);
+    self.httpURLResponse = (NSHTTPURLResponse*)response;
+}
+
+-(void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
+    NSLog(@"Network Test current thread %@", [NSThread currentThread]);
+    if (!self.receivedData) {
+        self.receivedData = [[NSMutableData alloc] init];
+    }
+    NSLog(@"didReceiveData");
+    [self.receivedData appendData:data];
+}
+
+-(void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+    NSLog(@"Network Test current thread %@", [NSThread currentThread]);
+    NSLog(@"didCompleteWithError");
+    [self finishOperation];
 }
 
 @end
